@@ -1,0 +1,13 @@
+{
+  "name": "echo-reference",
+  "version": "1.0.0",
+  "description": "心臟超音波計算參數查閱卡 PWA",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}

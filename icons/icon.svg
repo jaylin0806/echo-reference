@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="96" fill="#0a1228"/>
+
+  <!-- stylised four-chamber heart outline -->
+  <path d="M 256 124
+           C 198 70 110 96 96 168
+           C 80 248 150 320 256 404
+           C 362 320 432 248 416 168
+           C 402 96 314 70 256 124 Z"
+        fill="none" stroke="#93c5fd" stroke-width="14" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <!-- doppler/measurement caliper ticks -->
+  <g stroke="#fbbf24" stroke-width="8" stroke-linecap="round">
+    <line x1="170" y1="190" x2="170" y2="230"/>
+    <line x1="342" y1="190" x2="342" y2="230"/>
+    <line x1="170" y1="210" x2="342" y2="210"/>
+  </g>
+
+  <!-- waveform -->
+  <polyline points="120,330 170,330 196,290 224,360 250,300 276,330 392,330"
+            fill="none" stroke="#6ee7b7" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>
+</svg>
