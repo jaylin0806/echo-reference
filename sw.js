@@ -1,4 +1,4 @@
-const CACHE_NAME = 'echo-reference-v1';
+const CACHE_NAME = 'echo-reference-v2';
 const ASSETS = [
   './',
   './index.html',

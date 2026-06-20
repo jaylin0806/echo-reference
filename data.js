@@ -33,6 +33,28 @@ const ECHO_DATA = {
           { label: '重度下降', range: '男 <30%／女 <30%', severity: 'severe' },
         ],
         sourceNote: '2015 ASE/EACVI Chamber Quantification Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'EF',
+          resultUnit: '%',
+          inputs: [
+            { key: 'sex', label: '性別', type: 'select', options: [{ value: 'm', label: '男' }, { value: 'f', label: '女' }] },
+            { key: 'edv', label: 'EDV', unit: 'mL', step: '1', placeholder: '110' },
+            { key: 'esv', label: 'ESV', unit: 'mL', step: '1', placeholder: '45' },
+          ],
+          compute: (v) => {
+            if (!v.edv || v.esv == null || v.edv <= 0) return null;
+            return (v.edv - v.esv) / v.edv * 100;
+          },
+          classify: (val, v) => {
+            const male = v.sex !== 'f';
+            const cut = male ? [52, 41, 30] : [54, 41, 30];
+            if (val >= cut[0]) return { severity: 'normal', label: '正常' };
+            if (val >= cut[1]) return { severity: 'mild', label: '輕度下降' };
+            if (val >= cut[2]) return { severity: 'moderate', label: '中度下降' };
+            return { severity: 'severe', label: '重度下降' };
+          },
+        },
       },
       {
         name: 'Teichholz（M-mode）',
@@ -51,6 +73,28 @@ const ECHO_DATA = {
           { label: '重度下降', range: '<30%', severity: 'severe' },
         ],
         sourceNote: '臨床慣用簡化分級（M-mode 法準確度較 biplane 低，僅供快速評估）',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'EF',
+          resultUnit: '%',
+          inputs: [
+            { key: 'dEd', label: 'LV 內徑（ED）', unit: 'cm', step: '0.1', placeholder: '5.0' },
+            { key: 'dEs', label: 'LV 內徑（ES）', unit: 'cm', step: '0.1', placeholder: '3.2' },
+          ],
+          compute: (v) => {
+            if (!v.dEd || !v.dEs) return null;
+            const edv = 7 * Math.pow(v.dEd, 3) / (2.4 + v.dEd);
+            const esv = 7 * Math.pow(v.dEs, 3) / (2.4 + v.dEs);
+            if (edv <= 0) return null;
+            return (edv - esv) / edv * 100;
+          },
+          classify: (val) => {
+            if (val >= 55) return { severity: 'normal', label: '正常' };
+            if (val >= 45) return { severity: 'mild', label: '輕度下降' };
+            if (val >= 30) return { severity: 'moderate', label: '中度下降' };
+            return { severity: 'severe', label: '重度下降' };
+          },
+        },
       },
       {
         name: 'FAC（Fractional Area Change）— 主要用於右心室收縮功能',
@@ -69,6 +113,25 @@ const ECHO_DATA = {
           { label: '重度下降', range: '<18%', severity: 'severe' },
         ],
         sourceNote: '2015 ASE/EACVI Chamber Quantification Guideline（RV 章節）',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'RV FAC',
+          resultUnit: '%',
+          inputs: [
+            { key: 'eda', label: 'RV EDA', unit: 'cm²', step: '0.1', placeholder: '18' },
+            { key: 'esa', label: 'RV ESA', unit: 'cm²', step: '0.1', placeholder: '10' },
+          ],
+          compute: (v) => {
+            if (!v.eda || v.esa == null) return null;
+            return (v.eda - v.esa) / v.eda * 100;
+          },
+          classify: (val) => {
+            if (val >= 35) return { severity: 'normal', label: '正常' };
+            if (val >= 25) return { severity: 'mild', label: '輕度下降' };
+            if (val >= 18) return { severity: 'moderate', label: '中度下降' };
+            return { severity: 'severe', label: '重度下降' };
+          },
+        },
       },
     ],
   },
@@ -98,6 +161,27 @@ const ECHO_DATA = {
           { label: '重度 AS', range: 'AVA <1.0 cm²（indexed <0.6 cm²/m²）；Vmax ≥4.0 m/s；mean PG ≥40 mmHg', severity: 'severe' },
         ],
         sourceNote: '2020 ACC/AHA VHD Guideline；2021 ESC/EACTS VHD Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'AVA',
+          resultUnit: 'cm²',
+          inputs: [
+            { key: 'lvotD', label: 'LVOT 直徑', unit: 'cm', step: '0.1', placeholder: '2.0' },
+            { key: 'lvotVTI', label: 'LVOT VTI', unit: 'cm', step: '0.1', placeholder: '20' },
+            { key: 'avVTI', label: 'AV VTI', unit: 'cm', step: '0.1', placeholder: '80' },
+          ],
+          compute: (v) => {
+            if (!v.lvotD || !v.lvotVTI || !v.avVTI) return null;
+            const csa = Math.PI * Math.pow(v.lvotD / 2, 2);
+            return (csa * v.lvotVTI) / v.avVTI;
+          },
+          classify: (val) => {
+            if (val >= 3.0) return { severity: 'normal', label: '正常' };
+            if (val > 1.5) return { severity: 'mild', label: '輕度 AS' };
+            if (val >= 1.0) return { severity: 'moderate', label: '中度 AS' };
+            return { severity: 'severe', label: '重度 AS' };
+          },
+        },
       },
       {
         name: 'DVI（Dimensionless Velocity Index）',
@@ -114,6 +198,24 @@ const ECHO_DATA = {
           { label: '重度 AS', range: '<0.25', severity: 'severe' },
         ],
         sourceNote: '2020 ACC/AHA VHD Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'DVI',
+          resultUnit: '',
+          inputs: [
+            { key: 'lvotVTI', label: 'LVOT VTI', unit: 'cm', step: '0.1', placeholder: '20' },
+            { key: 'avVTI', label: 'AV VTI', unit: 'cm', step: '0.1', placeholder: '80' },
+          ],
+          compute: (v) => {
+            if (!v.lvotVTI || !v.avVTI) return null;
+            return v.lvotVTI / v.avVTI;
+          },
+          classify: (val) => {
+            if (val > 0.5) return { severity: 'normal', label: '正常／無明顯狹窄' };
+            if (val >= 0.25) return { severity: 'moderate', label: '中度 AS' };
+            return { severity: 'severe', label: '重度 AS' };
+          },
+        },
       },
       {
         name: 'AR（主動脈瓣閉鎖不全）嚴重度',
@@ -130,6 +232,23 @@ const ECHO_DATA = {
           { label: '重度', range: 'VC >0.6cm；PHT <200ms；RF ≥50%', severity: 'severe' },
         ],
         sourceNote: '2017 ASE/EACVI Valvular Regurgitation Guideline',
+        calculator: {
+          type: 'multi',
+          criteria: [
+            {
+              key: 'vc', label: 'Vena Contracta', unit: 'cm', step: '0.05', placeholder: '0.4',
+              classify: (v) => v < 0.3 ? { severity: 'mild', label: '輕度' } : v <= 0.6 ? { severity: 'moderate', label: '中度' } : { severity: 'severe', label: '重度' },
+            },
+            {
+              key: 'pht', label: 'PHT', unit: 'ms', step: '10', placeholder: '300',
+              classify: (v) => v > 500 ? { severity: 'mild', label: '輕度' } : v >= 200 ? { severity: 'moderate', label: '中度' } : { severity: 'severe', label: '重度' },
+            },
+            {
+              key: 'rf', label: 'Regurgitant Fraction', unit: '%', step: '1', placeholder: '35',
+              classify: (v) => v < 30 ? { severity: 'mild', label: '輕度' } : v < 50 ? { severity: 'moderate', label: '中度' } : { severity: 'severe', label: '重度' },
+            },
+          ],
+        },
       },
     ],
   },
@@ -159,6 +278,21 @@ const ECHO_DATA = {
           { label: '重度 MS', range: 'MVA <1.0 cm²', severity: 'severe' },
         ],
         sourceNote: '2009/2017 ASE Native Valve Stenosis Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'MVA',
+          resultUnit: 'cm²',
+          inputs: [
+            { key: 'pht', label: 'PHT', unit: 'ms', step: '10', placeholder: '220' },
+          ],
+          compute: (v) => v.pht ? 220 / v.pht : null,
+          classify: (val) => {
+            if (val >= 4.0) return { severity: 'normal', label: '正常' };
+            if (val > 1.5) return { severity: 'mild', label: '輕度 MS' };
+            if (val >= 1.0) return { severity: 'moderate', label: '中度 MS' };
+            return { severity: 'severe', label: '重度 MS' };
+          },
+        },
       },
       {
         name: 'MV Area（Planimetry，直接描繪）',
@@ -175,6 +309,21 @@ const ECHO_DATA = {
           { label: '重度 MS', range: '<1.0 cm²', severity: 'severe' },
         ],
         sourceNote: '2009/2017 ASE Native Valve Stenosis Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'MVA',
+          resultUnit: 'cm²',
+          inputs: [
+            { key: 'area', label: '量測面積', unit: 'cm²', step: '0.1', placeholder: '1.2' },
+          ],
+          compute: (v) => v.area != null ? v.area : null,
+          classify: (val) => {
+            if (val >= 4.0) return { severity: 'normal', label: '正常' };
+            if (val > 1.5) return { severity: 'mild', label: '輕度 MS' };
+            if (val >= 1.0) return { severity: 'moderate', label: '中度 MS' };
+            return { severity: 'severe', label: '重度 MS' };
+          },
+        },
       },
       {
         name: 'MR（二尖瓣閉鎖不全）嚴重度',
@@ -191,6 +340,23 @@ const ECHO_DATA = {
           { label: '重度', range: 'VC ≥0.7cm；EROA ≥0.40cm²；RVol ≥60mL', severity: 'severe' },
         ],
         sourceNote: '2017 ASE/EACVI Valvular Regurgitation Guideline',
+        calculator: {
+          type: 'multi',
+          criteria: [
+            {
+              key: 'vc', label: 'Vena Contracta', unit: 'cm', step: '0.05', placeholder: '0.5',
+              classify: (v) => v < 0.3 ? { severity: 'mild', label: '輕度' } : v < 0.7 ? { severity: 'moderate', label: '中度' } : { severity: 'severe', label: '重度' },
+            },
+            {
+              key: 'eroa', label: 'EROA', unit: 'cm²', step: '0.01', placeholder: '0.3',
+              classify: (v) => v < 0.20 ? { severity: 'mild', label: '輕度' } : v < 0.40 ? { severity: 'moderate', label: '中度' } : { severity: 'severe', label: '重度' },
+            },
+            {
+              key: 'rvol', label: 'Regurgitant Volume', unit: 'mL', step: '1', placeholder: '45',
+              classify: (v) => v < 30 ? { severity: 'mild', label: '輕度' } : v < 60 ? { severity: 'moderate', label: '中度' } : { severity: 'severe', label: '重度' },
+            },
+          ],
+        },
       },
     ],
   },
@@ -218,6 +384,21 @@ const ECHO_DATA = {
           { label: '重度 PS', range: 'Vmax >4 m/s；PG >64 mmHg', severity: 'severe' },
         ],
         sourceNote: '2020 ACC/AHA VHD Guideline（先天性/後天性肺動脈瓣狹窄）',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'PG（peak gradient）',
+          resultUnit: 'mmHg',
+          inputs: [
+            { key: 'vmax', label: 'Vmax', unit: 'm/s', step: '0.1', placeholder: '3.2' },
+          ],
+          compute: (v) => v.vmax != null ? 4 * v.vmax * v.vmax : null,
+          classify: (val, v) => {
+            if (v.vmax < 1.0) return { severity: 'normal', label: '正常' };
+            if (val < 36) return { severity: 'mild', label: '輕度 PS' };
+            if (val <= 64) return { severity: 'moderate', label: '中度 PS' };
+            return { severity: 'severe', label: '重度 PS' };
+          },
+        },
       },
       {
         name: 'PR（肺動脈瓣閉鎖不全）嚴重度',
@@ -234,6 +415,15 @@ const ECHO_DATA = {
           { label: '重度', range: 'PHT <100ms；噴流寬廣；肺動脈分支舒張期逆流', severity: 'severe' },
         ],
         sourceNote: '2017 ASE/EACVI Valvular Regurgitation Guideline',
+        calculator: {
+          type: 'multi',
+          criteria: [
+            {
+              key: 'pht', label: 'PHT', unit: 'ms', step: '10', placeholder: '150',
+              classify: (v) => v > 100 ? { severity: 'mild', label: '輕度' } : { severity: 'severe', label: '重度' },
+            },
+          ],
+        },
       },
     ],
   },
@@ -261,6 +451,15 @@ const ECHO_DATA = {
           { label: '重度', range: 'VC ≥0.7cm；肝靜脈收縮期逆流', severity: 'severe' },
         ],
         sourceNote: '2017 ASE/EACVI Valvular Regurgitation Guideline',
+        calculator: {
+          type: 'multi',
+          criteria: [
+            {
+              key: 'vc', label: 'Vena Contracta', unit: 'cm', step: '0.05', placeholder: '0.5',
+              classify: (v) => v < 0.3 ? { severity: 'mild', label: '輕度' } : v < 0.7 ? { severity: 'moderate', label: '中度' } : { severity: 'severe', label: '重度' },
+            },
+          ],
+        },
       },
       {
         name: 'RVSP（肺動脈收縮壓估算）',
@@ -278,6 +477,22 @@ const ECHO_DATA = {
           { label: '重度升高', range: 'RVSP >70 mmHg', severity: 'severe' },
         ],
         sourceNote: '2015 ASE/EACVI Chamber Quantification Guideline（肺動脈壓估算章節）',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'RVSP',
+          resultUnit: 'mmHg',
+          inputs: [
+            { key: 'trVmax', label: 'TR Vmax', unit: 'm/s', step: '0.1', placeholder: '3.0' },
+            { key: 'rap', label: 'RAP（估算）', unit: 'mmHg', step: '1', placeholder: '8' },
+          ],
+          compute: (v) => (v.trVmax != null && v.rap != null) ? 4 * v.trVmax * v.trVmax + v.rap : null,
+          classify: (val) => {
+            if (val < 35) return { severity: 'normal', label: '正常' };
+            if (val <= 50) return { severity: 'mild', label: '輕度升高' };
+            if (val <= 70) return { severity: 'moderate', label: '中度升高' };
+            return { severity: 'severe', label: '重度升高' };
+          },
+        },
       },
       {
         name: 'TAPSE（右心室收縮功能）',
@@ -293,6 +508,16 @@ const ECHO_DATA = {
           { label: '右心室收縮功能下降', range: '<17 mm', severity: 'moderate' },
         ],
         sourceNote: '2015 ASE/EACVI Chamber Quantification Guideline（RV 章節）',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'TAPSE',
+          resultUnit: 'mm',
+          inputs: [
+            { key: 'tapse', label: 'TAPSE', unit: 'mm', step: '0.5', placeholder: '18' },
+          ],
+          compute: (v) => v.tapse != null ? v.tapse : null,
+          classify: (val) => val >= 17 ? { severity: 'normal', label: '正常' } : { severity: 'moderate', label: '右心室收縮功能下降' },
+        },
       },
     ],
   },
@@ -321,6 +546,21 @@ const ECHO_DATA = {
           { label: 'Grade III（限制型）', range: '>2.0', severity: 'severe' },
         ],
         sourceNote: '2016 ASE/EACVI Diastolic Function Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'E/A',
+          resultUnit: '',
+          inputs: [
+            { key: 'eVel', label: 'E 波峰速', unit: 'm/s', step: '0.1', placeholder: '0.7' },
+            { key: 'aVel', label: 'A 波峰速', unit: 'm/s', step: '0.1', placeholder: '0.8' },
+          ],
+          compute: (v) => (v.eVel != null && v.aVel) ? v.eVel / v.aVel : null,
+          classify: (val) => {
+            if (val < 0.8) return { severity: 'mild', label: 'Grade I（鬆弛障礙）' };
+            if (val <= 2.0) return { severity: 'normal', label: '正常／Grade I 可能' };
+            return { severity: 'severe', label: 'Grade III（限制型）' };
+          },
+        },
       },
       {
         name: "E/e' Ratio",
@@ -337,6 +577,27 @@ const ECHO_DATA = {
           { label: '左心室充填壓升高', range: "平均 E/e' >14", severity: 'severe' },
         ],
         sourceNote: '2016 ASE/EACVI Diastolic Function Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: "平均 E/e'",
+          resultUnit: '',
+          inputs: [
+            { key: 'eVel', label: 'E 波峰速', unit: 'cm/s', step: '1', placeholder: '70' },
+            { key: 'septalE', label: "Septal e'", unit: 'cm/s', step: '0.5', placeholder: '6' },
+            { key: 'lateralE', label: "Lateral e'", unit: 'cm/s', step: '0.5', placeholder: '9' },
+          ],
+          compute: (v) => {
+            if (v.eVel == null || v.septalE == null || v.lateralE == null) return null;
+            const avgE = (v.septalE + v.lateralE) / 2;
+            if (avgE <= 0) return null;
+            return v.eVel / avgE;
+          },
+          classify: (val) => {
+            if (val < 8) return { severity: 'normal', label: '正常' };
+            if (val <= 14) return { severity: 'mild', label: '不確定（灰色地帶）' };
+            return { severity: 'severe', label: '左心室充填壓升高' };
+          },
+        },
       },
       {
         name: 'LAVI（左心房容積指數）',
@@ -352,6 +613,17 @@ const ECHO_DATA = {
           { label: '左心房擴大', range: '>34 mL/m²', severity: 'moderate' },
         ],
         sourceNote: '2015 ASE/EACVI Chamber Quantification Guideline',
+        calculator: {
+          type: 'formula',
+          resultLabel: 'LAVI',
+          resultUnit: 'mL/m²',
+          inputs: [
+            { key: 'laVol', label: 'LA Volume', unit: 'mL', step: '1', placeholder: '55' },
+            { key: 'bsa', label: 'BSA', unit: 'm²', step: '0.01', placeholder: '1.7' },
+          ],
+          compute: (v) => (v.laVol != null && v.bsa) ? v.laVol / v.bsa : null,
+          classify: (val) => val <= 34 ? { severity: 'normal', label: '正常' } : { severity: 'moderate', label: '左心房擴大' },
+        },
       },
       {
         name: '舒張功能異常分級演算法（4 項指標）',
@@ -368,6 +640,20 @@ const ECHO_DATA = {
           { label: '舒張功能異常', range: '≥3 項指標異常（即 LV 充填壓升高）', severity: 'severe' },
         ],
         sourceNote: '2016 ASE/EACVI Diastolic Function Guideline',
+        calculator: {
+          type: 'checklist',
+          items: [
+            { key: 'eprime', label: "e' 異常（septal e' <7 或 lateral e' <10 cm/s）" },
+            { key: 'eoverE', label: "平均 E/e' > 14" },
+            { key: 'trvmax', label: 'TR Vmax > 2.8 m/s' },
+            { key: 'lavi', label: 'LAVI > 34 mL/m²' },
+          ],
+          classify: (count) => {
+            if (count <= 1) return { severity: 'normal', label: '舒張功能正常' };
+            if (count === 2) return { severity: 'mild', label: '不確定' };
+            return { severity: 'severe', label: '舒張功能異常' };
+          },
+        },
       },
     ],
   },
